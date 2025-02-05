@@ -19,6 +19,13 @@ if (savedWorkouts) {
     savedWorkouts.forEach((workout, index) => workouts[index].completed = workout.completed);
 }
 
+// Load progress table from localStorage
+const savedTable = JSON.parse(localStorage.getItem("progressTable"));
+if (savedTable) {
+    progressBody.innerHTML = savedTable;
+    addClickEventsToTableCells();
+}
+
 // Render workouts
 function renderWorkouts() {
     workoutList.innerHTML = "";
@@ -46,8 +53,7 @@ function toggleComplete(index) {
 
 // Render progress table
 function renderProgressTable() {
-    const rows = progressBody.querySelectorAll('tr');
-    if (rows.length === 0) {
+    if (progressBody.querySelectorAll('tr').length === 0) {
         addCurrentWeekRow();
     }
     updateLastRowWithProgress();
@@ -70,6 +76,7 @@ function addCurrentWeekRow() {
     });
 
     progressBody.appendChild(newRow);
+    saveProgressTable();
 }
 
 // Update the last row in the table with the current progress
@@ -100,6 +107,22 @@ function toggleCellCompletion(cell) {
         cell.className = "completed-cell";
         cell.innerHTML = "&#10003;";
     }
+    saveProgressTable();
+}
+
+// Add click events to cells in the saved table
+function addClickEventsToTableCells() {
+    const cells = progressBody.querySelectorAll('td');
+    cells.forEach(cell => {
+        if (cell.cellIndex > 0) {
+            cell.addEventListener("click", () => toggleCellCompletion(cell));
+        }
+    });
+}
+
+// Save the progress table to localStorage
+function saveProgressTable() {
+    localStorage.setItem("progressTable", JSON.stringify(progressBody.innerHTML));
 }
 
 // Add next week's progress row and reset current week's progress
@@ -129,6 +152,7 @@ document.getElementById("next-week-btn").addEventListener("click", () => {
     });
 
     progressBody.appendChild(newRow);
+    saveProgressTable();
 
     // Reset current progress
     workouts.forEach(workout => workout.completed = false);
