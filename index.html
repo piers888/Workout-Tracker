@@ -23,6 +23,10 @@
             background-color: #d4edda;
             color: #155724;
             font-weight: bold;
+            cursor: pointer;
+        }
+        .incomplete-cell {
+            cursor: pointer;
         }
     </style>
 </head>
@@ -113,6 +117,8 @@
 
             workouts.forEach(() => {
                 const cell = document.createElement("td");
+                cell.className = "incomplete-cell";
+                cell.addEventListener("click", () => toggleCellCompletion(cell));
                 newRow.appendChild(cell);
             });
 
@@ -126,11 +132,27 @@
 
             const cells = lastRow.querySelectorAll('td');
             workouts.forEach((workout, index) => {
+                const cell = cells[index + 1];
                 if (workout.completed) {
-                    cells[index + 1].className = "completed-cell";
-                    cells[index + 1].innerHTML = "&#10003;";
+                    cell.className = "completed-cell";
+                    cell.innerHTML = "&#10003;";
+                } else {
+                    cell.className = "incomplete-cell";
+                    cell.innerHTML = "";
                 }
+                cell.addEventListener("click", () => toggleCellCompletion(cell));
             });
+        }
+
+        // Toggle cell completion manually
+        function toggleCellCompletion(cell) {
+            if (cell.classList.contains("completed-cell")) {
+                cell.className = "incomplete-cell";
+                cell.innerHTML = "";
+            } else {
+                cell.className = "completed-cell";
+                cell.innerHTML = "&#10003;";
+            }
         }
 
         // Add next week's progress row and reset current week's progress
@@ -154,6 +176,8 @@
 
             workouts.forEach(() => {
                 const cell = document.createElement("td");
+                cell.className = "incomplete-cell";
+                cell.addEventListener("click", () => toggleCellCompletion(cell));
                 newRow.appendChild(cell);
             });
 
