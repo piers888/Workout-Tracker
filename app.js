@@ -9,21 +9,14 @@ const workouts = [
     { day: "Sunday", description: "Active Rest / Recovery", completed: false },
 ];
 
-// DOM Elements
 const workoutList = document.getElementById("workout-list");
 const progressBody = document.getElementById("progress-body");
+let progressData = JSON.parse(localStorage.getItem("progressData")) || [];
 
 // Load workouts from localStorage
 const savedWorkouts = JSON.parse(localStorage.getItem("workouts"));
 if (savedWorkouts) {
     savedWorkouts.forEach((workout, index) => workouts[index].completed = workout.completed);
-}
-
-// Load progress table from localStorage
-const savedTable = JSON.parse(localStorage.getItem("progressTable"));
-if (savedTable) {
-    progressBody.innerHTML = savedTable;
-    addClickEventsToTableCells();
 }
 
 // Render workouts
@@ -53,111 +46,60 @@ function toggleComplete(index) {
 
 // Render progress table
 function renderProgressTable() {
-    if (progressBody.querySelectorAll('tr').length === 0) {
-        addCurrentWeekRow();
-    }
-    updateLastRowWithProgress();
+    progressBody.innerHTML = "";
+    progressData.forEach((week) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${week.date}</td>`;
+
+        week.days.forEach((dayCompleted, dayIndex) => {
+            const cell = document.createElement("td");
+            cell.className = dayCompleted ? "completed-cell" : "incomplete-cell";
+            cell.innerHTML = dayCompleted ? "&#10003;" : "";
+            cell.addEventListener("click", () => toggleCellCompletion(cell, week.date, dayIndex));
+            row.appendChild(cell);
+        });
+
+        progressBody.appendChild(row);
+    });
 }
 
-// Add the current week's row
+// Add a new week's row
 function addCurrentWeekRow() {
     const currentDate = new Date();
     const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1));
     const formattedDate = `${startOfWeek.getDate()}/${startOfWeek.getMonth() + 1}/${startOfWeek.getFullYear().toString().slice(-2)}`;
 
-    const newRow = document.createElement("tr");
-    newRow.innerHTML = `<td>${formattedDate}</td>`;
-
-    workouts.forEach(() => {
-        const cell = document.createElement("td");
-        cell.className = "incomplete-cell";
-        cell.addEventListener("click", () => toggleCellCompletion(cell));
-        newRow.appendChild(cell);
-    });
-
-    progressBody.appendChild(newRow);
-    saveProgressTable();
-}
-
-// Update the last row in the table with the current progress
-function updateLastRowWithProgress() {
-    const lastRow = progressBody.lastElementChild;
-    if (!lastRow) return;
-
-    const cells = lastRow.querySelectorAll('td');
-    workouts.forEach((workout, index) => {
-        const cell = cells[index + 1];
-        if (workout.completed) {
-            cell.className = "completed-cell";
-            cell.innerHTML = "&#10003;";
-        } else {
-            cell.className = "incomplete-cell";
-            cell.innerHTML = "";
-        }
-        cell.addEventListener("click", () => toggleCellCompletion(cell));
-    });
-}
-
-// Toggle cell completion manually
-function toggleCellCompletion(cell) {
-    if (cell.classList.contains("completed-cell")) {
-        cell.className = "incomplete-cell";
-        cell.innerHTML = "";
-    } else {
-        cell.className = "completed-cell";
-        cell.innerHTML = "&#10003;";
+    if (!progressData.some(week => week.date === formattedDate)) {
+        progressData.push({ date: formattedDate, days: Array(7).fill(false) });
+        saveProgressData();
+        renderProgressTable();
     }
-    saveProgressTable();
 }
 
-// Add click events to cells in the saved table
-function addClickEventsToTableCells() {
-    const cells = progressBody.querySelectorAll('td');
-    cells.forEach(cell => {
-        if (cell.cellIndex > 0) {
-            cell.addEventListener("click", () => toggleCellCompletion(cell));
-        }
-    });
+// Toggle cell completion and update progress data
+function toggleCellCompletion(cell, weekDate, dayIndex) {
+    const week = progressData.find(week => week.date === weekDate);
+    if (week) {
+        week.days[dayIndex] = !week.days[dayIndex];
+        cell.className = week.days[dayIndex] ? "completed-cell" : "incomplete-cell";
+        cell.innerHTML = week.days[dayIndex] ? "&#10003;" : "";
+        saveProgressData();
+    }
 }
 
-// Save the progress table to localStorage
-function saveProgressTable() {
-    localStorage.setItem("progressTable", JSON.stringify(progressBody.innerHTML));
+// Save progress data to localStorage
+function saveProgressData() {
+    localStorage.setItem("progressData", JSON.stringify(progressData));
 }
 
-// Add next week's progress row and reset current week's progress
+// Add next week's progress row and reset current progress
 document.getElementById("next-week-btn").addEventListener("click", () => {
-    const lastRow = progressBody.lastElementChild;
-    let nextStartOfWeek;
-
-    if (lastRow) {
-        const lastDateText = lastRow.firstChild.textContent;
-        const [day, month, year] = lastDateText.split("/").map(Number);
-        const lastDate = new Date(`20${year}`, month - 1, day);
-        nextStartOfWeek = new Date(lastDate.setDate(lastDate.getDate() + 7));
-    } else {
-        nextStartOfWeek = new Date();
-    }
-
-    const formattedNextDate = `${nextStartOfWeek.getDate()}/${nextStartOfWeek.getMonth() + 1}/${nextStartOfWeek.getFullYear().toString().slice(-2)}`;
-
-    const newRow = document.createElement("tr");
-    newRow.innerHTML = `<td>${formattedNextDate}</td>`;
-
-    workouts.forEach(() => {
-        const cell = document.createElement("td");
-        cell.className = "incomplete-cell";
-        cell.addEventListener("click", () => toggleCellCompletion(cell));
-        newRow.appendChild(cell);
-    });
-
-    progressBody.appendChild(newRow);
-    saveProgressTable();
-
-    // Reset current progress
+    addCurrentWeekRow();
     workouts.forEach(workout => workout.completed = false);
     localStorage.setItem("workouts", JSON.stringify(workouts));
     renderWorkouts();
 });
 
+// Initial rendering
+addCurrentWeekRow();
 renderWorkouts();
