@@ -1,3 +1,4 @@
+// Define workouts
 const workouts = [
     { day: "Monday", description: "VR Shadow Boxing (Cardio Focus)", completed: false },
     { day: "Tuesday", description: "VR Shadow Boxing (Cardio Focus)", completed: false },
@@ -8,6 +9,7 @@ const workouts = [
     { day: "Sunday", description: "Active Rest / Recovery", completed: false },
 ];
 
+// DOM Elements
 const workoutList = document.getElementById("workout-list");
 const progressBody = document.getElementById("progress-body");
 
@@ -62,6 +64,8 @@ function addCurrentWeekRow() {
 
     workouts.forEach(() => {
         const cell = document.createElement("td");
+        cell.className = "incomplete-cell";
+        cell.addEventListener("click", () => toggleCellCompletion(cell));
         newRow.appendChild(cell);
     });
 
@@ -75,11 +79,27 @@ function updateLastRowWithProgress() {
 
     const cells = lastRow.querySelectorAll('td');
     workouts.forEach((workout, index) => {
+        const cell = cells[index + 1];
         if (workout.completed) {
-            cells[index + 1].className = "completed-cell";
-            cells[index + 1].innerHTML = "&#10003;";
+            cell.className = "completed-cell";
+            cell.innerHTML = "&#10003;";
+        } else {
+            cell.className = "incomplete-cell";
+            cell.innerHTML = "";
         }
+        cell.addEventListener("click", () => toggleCellCompletion(cell));
     });
+}
+
+// Toggle cell completion manually
+function toggleCellCompletion(cell) {
+    if (cell.classList.contains("completed-cell")) {
+        cell.className = "incomplete-cell";
+        cell.innerHTML = "";
+    } else {
+        cell.className = "completed-cell";
+        cell.innerHTML = "&#10003;";
+    }
 }
 
 // Add next week's progress row and reset current week's progress
@@ -103,6 +123,8 @@ document.getElementById("next-week-btn").addEventListener("click", () => {
 
     workouts.forEach(() => {
         const cell = document.createElement("td");
+        cell.className = "incomplete-cell";
+        cell.addEventListener("click", () => toggleCellCompletion(cell));
         newRow.appendChild(cell);
     });
 
